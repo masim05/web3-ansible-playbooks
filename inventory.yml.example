@@ -1,0 +1,9 @@
+galactica:
+    hosts:
+        galactica-t.example.com
+    vars:
+        user: galactica
+        port_prefix: 20
+        go_version: 1.22.3
+        galactica_version: 0.1.2
+        chain_id: galactica_9302-1
