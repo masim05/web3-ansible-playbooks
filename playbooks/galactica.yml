@@ -1,0 +1,126 @@
+---
+- name: Install galactica node
+  hosts: galactica
+  remote_user: ansible
+  tasks:
+
+    - name: Show params
+      debug:
+        msg: user {{ user }}, port_prefix {{ port_prefix }}, go_version {{ go_version }}
+
+    - name: Install go
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        cd
+        VERSION={{ go_version }}
+        mkdir -p ~/usr/local
+        wget "https://go.dev/dl/go$VERSION.linux-amd64.tar.gz" -O go.tar.gz > /dev/null 2>&1
+        ls go.tar.gz && ls ~/usr/local/go && rm -rf ~/usr/local/go
+        tar -xzf go.tar.gz -C ~/usr/local
+        rm go.tar.gz
+        ~/usr/local/go/bin/go version
+
+    - name: Build galactica
+      become: yes
+      become_user: "{{ user }}"
+      vars:
+        ansible_command_timeout: 60
+      shell: |
+        export PATH=$PATH:~/usr/local/go/bin:/opt/galactica/bin
+        export GOPATH=~/go
+        cd
+        git clone -b {{ git_tag }} https://github.com/Galactica-corp/galactica
+        cd galactica
+        BINDIR=/opt/galactica/bin make install
+        galacticad version --long | tail
+
+    - name: Setup galactica service
+      become: yes
+      become_user: root
+      shell: |
+        tee /etc/systemd/system/galacticad.service > /dev/null << EOF
+        [Unit]
+        Description=galactica node service
+        After=network-online.target
+
+        [Service]
+        User={{user}}
+        ExecStart=/opt/galactica/bin/galacticad start --chain-id {{ chain_id }} --home=/home/{{ user }}/.galactica
+        Restart=on-failure
+        RestartSec=10
+        LimitNOFILE=65535
+
+        [Install]
+        WantedBy=multi-user.target
+        EOF
+
+        systemctl daemon-reload
+        systemctl enable galacticad
+
+    - name: Configure galactica node
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        export PATH=$PATH:/opt/galactica/bin
+        galacticad config chain-id {{ chain_id }}
+        galacticad config keyring-backend os
+
+        wget https://config-t.noders.services/galactica/genesis.json -O ~/.galactica/config/genesis.json
+        wget https://config-t.noders.services/galactica/addrbook.json -O ~/.galactica/config/addrbook.json
+
+        sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"707af7d29be8d3fff3c4f0cdc0b8986a6a8aff63@galactica-t-rpc.noders.services:28656\"/" ~/.galactica/config/config.toml
+
+        sed -i -e "s|^minimum-gas-prices *=.*|minimum-gas-prices = \"0.001agnet\"|" ~/.galactica/config/app.toml
+
+        sed -i \
+          -e 's|^pruning *=.*|pruning = "custom"|' \
+          -e 's|^pruning-keep-recent *=.*|pruning-keep-recent = "100"|' \
+          -e 's|^pruning-keep-every *=.*|pruning-keep-every = "0"|' \
+          -e 's|^pruning-interval *=.*|pruning-interval = "19"|' \
+          ~/.galactica/config/app.toml
+
+        export GALACTICA_PORT_PREFIX={{ port_prefix }}
+
+        sed -i.bak -e "s%:1317%:${GALACTICA_PORT_PREFIX}317%g" \
+        -e "s%:8080%:${GALACTICA_PORT_PREFIX}080%g" \
+        -e "s%:9090%:${GALACTICA_PORT_PREFIX}090%g" \
+        -e "s%:9091%:${GALACTICA_PORT_PREFIX}091%g" \
+        -e "s%:8545%:${GALACTICA_PORT_PREFIX}545%g" \
+        -e "s%:8546%:${GALACTICA_PORT_PREFIX}546%g" \
+        -e "s%:6065%:${GALACTICA_PORT_PREFIX}065%g" ~/.galactica/config/app.toml
+
+        sed -i.bak -e "s%:26658%:${GALACTICA_PORT_PREFIX}658%g" \
+        -e "s%:26657%:${GALACTICA_PORT_PREFIX}657%g" \
+        -e "s%:6060%:${GALACTICA_PORT_PREFIX}060%g" \
+        -e "s%:26656%:${GALACTICA_PORT_PREFIX}656%g" \
+        -e "s%:26660%:${GALACTICA_PORT_PREFIX}660%g" ~/.galactica/config/config.toml
+
+    - name: Get galactica service status
+      become: yes
+      become_user: root
+      shell: |
+        systemctl restart galacticad
+        sleep 10
+        systemctl stop galacticad
+        systemctl status galacticad
+        echo RC: $?
+
+    - name: Sync galactica node
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        cp ~/.galactica/data/priv_validator_state.json  ~/.galactica/priv_validator_state.json
+        rm -rf ~/.galactica/data
+        rm -rf ~/.galactica/wasm
+        curl -o - -L https://galactica.snapshot-t.stavr.tech/gala-snap.tar.lz4 | lz4 -c -d - | tar -x -C ~/.galactica --strip-components 2
+        cp ~/.galactica/priv_validator_state.json  ~/.galactica/data/priv_validator_state.json
+        echo RC: $?
+
+    - name: Start galactica service
+      become: yes
+      become_user: root
+      shell: |
+        systemctl restart galacticad
+        systemctl status galacticad
+        echo RC: $?
