@@ -1,0 +1,39 @@
+---
+- name: Preset node
+  hosts: galactica
+  remote_user: ansible
+  become: yes
+  become_user: root
+  tasks:
+
+    - name: Show params
+      debug:
+        msg: user {{ user }}, port_prefix {{ port_prefix }}, go_version {{ go_version }}
+
+    - name: Create system user
+      ansible.builtin.user: name="{{ user }}" shell=/usr/bin/bash
+
+    - name: "UFW: allow 22 tcp"
+      community.general.ufw: rule=allow port=22 proto=tcp
+
+    - name: "UFW: set default policy"
+      community.general.ufw: state=enabled policy=reject
+
+    - name: "UFW: show status"
+      ansible.builtin.command: ufw status verbose
+
+    - name: Create /opt folder
+      shell: |
+        mkdir -p /opt
+        chmod 777 /opt
+
+    - name: Install jq lz4 build-essential curl acl git
+      ansible.builtin.apt:
+        update_cache: yes
+        pkg:
+          - jq
+          - lz4
+          - build-essential
+          - curl
+          - acl
+          - git
