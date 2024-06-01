@@ -18,3 +18,7 @@ To install, sync and run galactica node:
 ```bash
 ansible-playbook -i inventory.yml -v --ask-become-pass -l galactica playbooks/galactica.yml
 ```
+To install, sync and run zero gravity node:
+```bash
+ansible-playbook -i inventory.yml -v --ask-become-pass -l zg playbooks/zg.yml
+```
