@@ -1,6 +1,6 @@
 ---
 - name: Preset node
-  hosts: galactica
+  hosts: all
   remote_user: ansible
   become: yes
   become_user: root

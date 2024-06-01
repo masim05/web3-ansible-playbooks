@@ -1,0 +1,122 @@
+---
+- name: Install zero gravity node
+  hosts: zg
+  remote_user: ansible
+  tasks:
+
+    - name: Show params
+      debug:
+        msg: user {{ user }}, port_prefix {{ port_prefix }}, go_version {{ go_version }}
+
+    - name: Install go
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        cd
+        VERSION={{ go_version }}
+        mkdir -p ~/usr/local
+        wget "https://go.dev/dl/go$VERSION.linux-amd64.tar.gz" -O go.tar.gz > /dev/null 2>&1
+        ls go.tar.gz && ls ~/usr/local/go && rm -rf ~/usr/local/go
+        tar -xzf go.tar.gz -C ~/usr/local
+        rm go.tar.gz
+        ~/usr/local/go/bin/go version
+
+    - name: Build zero gravity
+      become: yes
+      become_user: "{{ user }}"
+      vars:
+        ansible_command_timeout: 60
+      shell: |
+        export PATH=$PATH:~/usr/local/go/bin:/opt/zero-gravity/bin
+        export GOPATH=~/go
+        cd
+        git clone -b {{ git_tag }} https://github.com/0glabs/0g-chain.git
+        cd 0g-chain
+        make install
+        mkdir -p /opt/zero-gravity/bin/
+        cp ~/go/bin/0gchaind /opt/zero-gravity/bin/
+        0gchaind version --long | tail
+
+    - name: Setup 0gd service
+      become: yes
+      become_user: root
+      shell: |
+        tee /etc/systemd/system/0gd.service > /dev/null << EOF
+        [Unit]
+        Description=zero-gravity node service
+        After=network-online.target
+
+        [Service]
+        User={{user}}
+        ExecStart=/opt/zero-gravity/bin/0gchaind start --home=/home/{{ user }}/.0gchain
+        Restart=on-failure
+        RestartSec=10
+        LimitNOFILE=65535
+
+        [Install]
+        WantedBy=multi-user.target
+        EOF
+
+        systemctl daemon-reload
+        systemctl enable 0gd
+
+    - name: Configure zero gravity node
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        export PATH=$PATH:/opt/zero-gravity/bin
+        0gchaind config chain-id {{ chain_id }}
+        0gchaind config keyring-backend os
+
+        wget https://github.com/0glabs/0g-chain/releases/download/v0.1.0/genesis.json -O ~/.0gchain/config/genesis.json
+        wget -O ~/.0gchain/config/addrbook.json https://raw.githubusercontent.com/masim05/play-web3/main/assets/addrbook.json
+
+        SEEDS="cd529839591e13f5ed69e9a029c5d7d96de170fe@46.4.55.46:34656,3ab056f065ee9d37c4ad2f393033d292651182ab@159.69.72.247:17656,097603a2a1f4e08bd57c4a13ea725081f991ba5e@62.171.153.225:16656,ae1c39dcf8d8a7c956a0333ca3d9176d1df87f64@62.169.23.106:26656,a4055b828e59832c7a06d61fc51347755a160d0b@157.90.33.62:21656"
+        sed -i.bak -e "s/^seeds *=.*/seeds = \"${SEEDS}\"/" $HOME/.0gchain/config/config.toml
+
+        export PORT_PREFIX={{ port_prefix }}
+
+        sed -i.bak -e "s%:1317%:${PORT_PREFIX}317%g" \
+        -e "s%:8080%:${PORT_PREFIX}080%g" \
+        -e "s%:9090%:${PORT_PREFIX}090%g" \
+        -e "s%:9091%:${PORT_PREFIX}091%g" \
+        -e "s%:8545%:${PORT_PREFIX}545%g" \
+        -e "s%:8546%:${PORT_PREFIX}546%g" \
+        -e "s%:6065%:${PORT_PREFIX}065%g" ~/.0gchain/config/app.toml
+
+        sed -i.bak -e "s%:26658%:${PORT_PREFIX}658%g" \
+        -e "s%:26657%:${PORT_PREFIX}657%g" \
+        -e "s%:6060%:${PORT_PREFIX}060%g" \
+        -e "s%:26656%:${PORT_PREFIX}656%g" \
+        -e "s%:26660%:${PORT_PREFIX}660%g" ~/.0gchain/config/config.toml
+
+    - name: Get 0gd service status
+      become: yes
+      become_user: root
+      shell: |
+        systemctl restart 0gd
+        sleep 10
+        systemctl stop 0gd
+        systemctl status 0gd
+        echo RC: $?
+
+    - name: Sync zero gravity node
+      become: yes
+      become_user: "{{ user }}"
+      async: 1800
+      poll: 60
+      shell: |
+        cp ~/.0gchain/data/priv_validator_state.json  ~/.0gchain/priv_validator_state.json
+        rm -rf ~/.0gchain/data
+        rm -rf ~/.0gchain/wasm
+        curl -o - -L https://og.snapshot.stavr.tech/og-snap.tar.lz4 | lz4 -c -d - | tar -x -C ~/.0gchain --strip-components 2 > /dev/null 2>&1
+        cp ~/.0gchain/priv_validator_state.json  ~/.0gchain/data/priv_validator_state.json
+        echo RC: $?
+
+    - name: Start 0gd service
+      become: yes
+      become_user: root
+      shell: |
+        systemctl restart 0gd
+        systemctl status 0gd
+        echo RC: $?
