@@ -6,5 +6,15 @@ galactica:
         user: galactica
         port_prefix: 20
         go_version: 1.22.3
-        galactica_version: 0.1.2
+        git_tag: v0.1.2
         chain_id: galactica_9302-1
+zg:
+    hosts:
+        zg-t-1.example.com:
+        zg-t-2.example.com:
+    vars:
+        user: zg
+        port_prefix: 21
+        go_version: 1.22.3
+        git_tag: v0.1.0
+        chain_id: zgtendermint_16600-1
