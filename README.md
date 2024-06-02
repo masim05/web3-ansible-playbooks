@@ -1,3 +1,12 @@
+### Why ansible?
+Ansible automates the management of remote systems and controls their desired
+state. This repo contains several playbooks to preset, install, sync and
+run validating nodes.
+
+### Install ansible
+Follow [official doc](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+to install ansible.
+
 ### Setup managed hosts
 On every managed host create `ansible` user with `sudo` permissions:
 ```bash
