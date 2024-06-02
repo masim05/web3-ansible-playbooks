@@ -31,3 +31,5 @@ To install, sync and run zero gravity node:
 ```bash
 ansible-playbook -i inventory.yml -v --ask-become-pass -l zg playbooks/zg.yml
 ```
+
+Feel free to add more playbooks and send PRs, you are welcome!
