@@ -36,3 +36,7 @@ After that it's up to you to expose public API endpoints on the node, create a
 new validator or put existing validator's keys on the node.
 
 Feel free to add more playbooks and send PRs, you are welcome!
+
+### Credits
+Great thanks to [STAVR](https://stavr-team.gitbook.io/nodes-guides) and
+[NODERS](https://noders.services/) teams for their services websites.
