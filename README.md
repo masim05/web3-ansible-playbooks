@@ -13,6 +13,7 @@ On every managed host create `ansible` user with `sudo` permissions:
 sudo adduser ansible
 sudo usermod -aG sudo ansible
 sudo su - ansible
+mkdir -p ~/.ssh
 # Put your ssh public key into `~/.ssh/authorized_keys`
 chmod 400 ~/.ssh/authorized_keys
 ```
