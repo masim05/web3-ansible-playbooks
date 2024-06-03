@@ -19,6 +19,20 @@ chmod 400 ~/.ssh/authorized_keys
 ```
 
 ### Run
+
+#### Node exporter (mac)
+Need to install `gnu-tar` dependency
+([doc](https://galaxy.ansible.com/ui/repo/published/prometheus/prometheus/content/role/node_exporter/))
+and disable fork safety in order to prevent
+`may have been in progress in another thread when fork() was called.` error
+([stackoverflow](https://stackoverflow.com/questions/50168647/multiprocessing-causes-python-to-crash-and-gives-an-error-may-have-been-in-progr)).
+```bash
+brew install gnu-tar
+OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES ansible-playbook -i inventory.yml --ask-become-pass playbooks/node-exp.yml
+```
+
+
+#### Nodes
 To run preset:
 ```bash
 ansible-playbook -i inventory.yml -v --ask-become-pass playbooks/preset.yml
