@@ -1,0 +1,14 @@
+---
+- name: Preset node
+  hosts: all
+  remote_user: ansible
+  become: yes
+  become_user: root
+  roles:
+    - prometheus.prometheus.node_exporter
+
+  tasks:
+
+    - name: Show params
+      debug:
+        msg: version {{ node_exporter_version }}, address {{ node_exporter_web_listen_address }}
