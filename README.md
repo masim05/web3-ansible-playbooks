@@ -20,6 +20,11 @@ chmod 400 ~/.ssh/authorized_keys
 
 ### Run
 
+Install dependencies:
+```bash
+ansible-galaxy install -r requirements.yml
+```
+
 #### Node exporter (mac)
 Need to install `gnu-tar` dependency
 ([doc](https://galaxy.ansible.com/ui/repo/published/prometheus/prometheus/content/role/node_exporter/))
