@@ -8,7 +8,6 @@
     - prometheus.prometheus.node_exporter
 
   tasks:
-
     - name: Show params
       debug:
         msg: version {{ node_exporter_version }}, address {{ node_exporter_web_listen_address }}
