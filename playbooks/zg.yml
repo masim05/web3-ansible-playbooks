@@ -8,6 +8,31 @@
       debug:
         msg: user {{ user }}, port_prefix {{ port_prefix }}, go_version {{ go_version }}
 
+    - name: Create system user
+      become: yes
+      become_user: root
+      ansible.builtin.user: name="{{ user }}" shell=/usr/bin/bash
+
+    - name: Install jq lz4 build-essential curl acl git
+      become: yes
+      become_user: root
+      ansible.builtin.apt:
+        update_cache: yes
+        pkg:
+          - jq
+          - lz4
+          - build-essential
+          - curl
+          - acl
+          - git
+
+    - name: Create /opt folder
+      become: yes
+      become_user: root
+      shell: |
+        mkdir -p /opt
+        chmod 777 /opt
+
     - name: Install go
       become: yes
       become_user: "{{ user }}"
