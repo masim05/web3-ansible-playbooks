@@ -11,3 +11,46 @@
     - name: Show params
       debug:
         msg: version {{ node_exporter_version }}, address {{ node_exporter_web_listen_address }}
+
+    - name: Ensure htpasswd exists
+      ansible.builtin.file:
+        path: /etc/nginx/htpasswd
+        state: touch
+
+    - name: Backup htpasswd config
+      ansible.builtin.copy:
+        remote_src: true
+        src: /etc/nginx/htpasswd
+        dest: /etc/nginx/htpasswd.bkp
+
+    - name: Add htpasswd config
+      ansible.builtin.template:
+        src: nginx/htpasswd
+        dest: /etc/nginx/htpasswd
+
+    - name: Ensure Nginx config exists
+      ansible.builtin.file:
+        path: /etc/nginx/sites-available/{{ domain }}.conf
+        state: touch
+
+    - name: Backup Nginx config
+      ansible.builtin.copy:
+        remote_src: true
+        src: /etc/nginx/sites-available/{{ domain }}.conf
+        dest: /etc/nginx/sites-available/{{ domain }}.conf.bkp
+
+    - name: Add Nginx config
+      ansible.builtin.template:
+        src: nginx/node_exp.conf.j2
+        dest: /etc/nginx/sites-available/{{ domain }}.conf
+
+    - name: Enable Nginx default config
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/{{ domain }}.conf
+        dest: /etc/nginx/sites-enabled/{{ domain }}.conf
+        state: link
+
+    - name: Reload Nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: reloaded

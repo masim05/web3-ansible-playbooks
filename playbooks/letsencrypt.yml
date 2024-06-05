@@ -1,0 +1,85 @@
+---
+- name: Basic Nginx TLS setup (certs + default server)
+  hosts: all
+  remote_user: ansible
+  become: true
+  become_user: root
+  vars:
+    webroot_path: '/var/www/html'
+    certbot_source_directory: /usr/local/certbot-src
+    certbot_executable_path: "{{ certbot_source_directory }}/venv/bin/certbot"
+  tasks:
+    - name: Install required packages for certbot
+      ansible.builtin.apt:
+        name:
+          - python3-venv
+          - gcc
+          - libaugeas0
+          - libssl-dev
+          - libffi-dev
+          - ca-certificates
+          - openssl
+          - git
+          - python3-venv
+
+    - name: Clone the certbot source directory
+      ansible.builtin.git:
+        depth: 1
+        repo: https://github.com/certbot/certbot
+        dest: "{{ certbot_source_directory }}"
+        version: v2.8.0
+        update: true
+
+    - name: Create certbot in virtual environment
+      ansible.builtin.command: python3 tools/venv.py
+      args:
+        chdir: "{{ certbot_source_directory }}"
+
+    - name: "UFW: allow 80 tcp"
+      community.general.ufw: rule=allow port=80 proto=tcp
+
+    - name: Generate the SSL certificate
+      ansible.builtin.command: "{{ certbot_executable_path }} certonly --standalone --preferred-challenges http -d {{ domain }} --non-interactive --agree-tos --email {{ email }}"
+
+    - name: Set up automatic renewal
+      ansible.builtin.cron:
+        name: "Certbot automatic renewal"
+        job: "{{ certbot_executable_path }} renew --quiet"
+        minute: "12"
+        hour: "21"
+
+    - name: Backup Nginx main config
+      ansible.builtin.copy:
+        remote_src: true
+        src: /etc/nginx/nginx.conf
+        dest: /etc/nginx/nginx.conf.bkp
+
+    - name: Add Nginx main config
+      ansible.builtin.template:
+        src: nginx/nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+
+    - name: Backup Nginx default config
+      ansible.builtin.copy:
+        remote_src: true
+        src: /etc/nginx/sites-available/default
+        dest: /etc/nginx/sites-available/default.bkp
+
+    - name: Add Nginx default config
+      ansible.builtin.template:
+        src: nginx/default.j2
+        dest: /etc/nginx/sites-available/default
+
+    - name: Enable Nginx default config
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/default
+        dest: /etc/nginx/sites-enabled/default
+        state: link
+
+    - name: "UFW: allow 443 tcp"
+      community.general.ufw: rule=allow port=443 proto=tcp
+
+    - name: Reload Nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: reloaded
