@@ -1,1 +1,2 @@
 inventory.yml
+playbooks/templates/nginx/htpasswd
