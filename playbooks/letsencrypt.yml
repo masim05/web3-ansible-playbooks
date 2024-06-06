@@ -1,5 +1,5 @@
 ---
-- name: Basic Nginx TLS setup (certs + default server)
+- name: Setup letsencrypt certs
   hosts: all
   remote_user: ansible
   become: true
