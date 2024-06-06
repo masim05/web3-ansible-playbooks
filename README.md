@@ -32,8 +32,11 @@ and disable fork safety in order to prevent
 `may have been in progress in another thread when fork() was called.` error
 ([stackoverflow](https://stackoverflow.com/questions/50168647/multiprocessing-causes-python-to-crash-and-gives-an-error-may-have-been-in-progr)).
 ```bash
+ansible-playbook -i inventory.yml --ask-become-pass -l monitored playbooks/ensure-nginx.yml
+ansible-playbook -i inventory.yml --ask-become-pass -l monitored playbooks/letsencrypt.yml
 brew install gnu-tar
-OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES ansible-playbook -i inventory.yml --ask-become-pass playbooks/node-exp.yml
+OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES \
+ansible-playbook -i inventory.yml --ask-become-pass -l monitored playbooks/node-exp.yml
 ```
 
 
