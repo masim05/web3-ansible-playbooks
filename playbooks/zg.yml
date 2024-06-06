@@ -49,6 +49,8 @@
     - name: Build zero gravity
       become: yes
       become_user: "{{ user }}"
+      async: 1800
+      poll: 60
       vars:
         ansible_command_timeout: 60
       shell: |
