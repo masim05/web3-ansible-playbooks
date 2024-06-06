@@ -1,0 +1,44 @@
+---
+- hosts: all
+  remote_user: ansible
+  become: true
+  become_user: root
+  tasks:
+  - name: Ensure nginx installed
+    ansible.builtin.apt:
+      name: nginx
+      update_cache: yes
+      state: present
+
+  - name: Backup Nginx main config
+    ansible.builtin.copy:
+      remote_src: true
+      src: /etc/nginx/nginx.conf
+      dest: /etc/nginx/nginx.conf.bkp
+
+  - name: Add Nginx main config
+    ansible.builtin.template:
+      src: nginx/nginx.conf.j2
+      dest: /etc/nginx/nginx.conf
+
+  - name: Backup Nginx default config
+    ansible.builtin.copy:
+      remote_src: true
+      src: /etc/nginx/sites-available/default
+      dest: /etc/nginx/sites-available/default.bkp
+
+  - name: Add Nginx default config
+    ansible.builtin.template:
+      src: nginx/default.j2
+      dest: /etc/nginx/sites-available/default
+
+  - name: Enable Nginx default config
+    ansible.builtin.file:
+      src: /etc/nginx/sites-available/default
+      dest: /etc/nginx/sites-enabled/default
+      state: link
+
+  - name: Reload Nginx
+    ansible.builtin.systemd:
+      name: nginx
+      state: reloaded

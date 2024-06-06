@@ -54,3 +54,6 @@
       ansible.builtin.systemd:
         name: nginx
         state: reloaded
+
+    - name: "UFW: allow 443 tcp"
+      community.general.ufw: rule=allow port=443 proto=tcp

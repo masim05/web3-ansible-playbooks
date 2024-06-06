@@ -1,5 +1,5 @@
 upstream prometheus-node {
-    server localhost:9100;
+    server {{ node_exporter_web_listen_address }};
 }
 
 server {
