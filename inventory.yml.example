@@ -18,3 +18,12 @@ zg:
         go_version: 1.22.3
         git_tag: v0.1.0
         chain_id: zgtendermint_16600-1
+monitored:
+    hosts:
+        host-to-be-monitored-with-node-exp-01.example.com:
+    vars:
+        node_exporter_version: 1.8.1
+        node_exporter_web_listen_address: 127.0.0.1:9100
+        domain: host-to-be-monitored-with-node-exp-01.example.com
+        email: email-for-cert@example.com
+        worker_processes: 2
