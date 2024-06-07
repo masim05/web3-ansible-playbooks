@@ -29,9 +29,17 @@
     - name: Create /opt folder
       become: yes
       become_user: root
-      shell: |
-        mkdir -p /opt
-        chmod 777 /opt
+      ansible.builtin.file:
+        path: /opt
+        state: directory
+        mode: '777'
+
+    - name: Create /home/{{ user }}/usr/local folder
+      become: yes
+      become_user: "{{ user }}"
+      ansible.builtin.file:
+        path: /home/{{ user }}/usr/local
+        state: directory
 
     - name: Install go
       become: yes
@@ -39,12 +47,26 @@
       shell: |
         cd
         VERSION={{ go_version }}
-        mkdir -p ~/usr/local
         wget "https://go.dev/dl/go$VERSION.linux-amd64.tar.gz" -O go.tar.gz > /dev/null 2>&1
         ls go.tar.gz && ls ~/usr/local/go && rm -rf ~/usr/local/go
         tar -xzf go.tar.gz -C ~/usr/local
         rm go.tar.gz
         ~/usr/local/go/bin/go version
+
+    - name: Create /opt/zero-gravity/bin/ folder
+      become: yes
+      become_user: "{{ user }}"
+      ansible.builtin.file:
+        path: /opt/zero-gravity/bin/
+        state: directory
+
+    - name: Clone 0g-chain repo
+      become: yes
+      become_user: "{{ user }}"
+      ansible.builtin.git:
+        repo: 'https://github.com/0glabs/0g-chain.git'
+        dest: /home/{{ user }}/0g-chain
+        version: "{{ git_tag }}"
 
     - name: Build zero gravity
       become: yes
@@ -56,36 +78,23 @@
       shell: |
         export PATH=$PATH:~/usr/local/go/bin:/opt/zero-gravity/bin
         export GOPATH=~/go
-        cd
-        git clone -b {{ git_tag }} https://github.com/0glabs/0g-chain.git
-        cd 0g-chain
+        cd /home/{{ user }}/0g-chain
         make install
-        mkdir -p /opt/zero-gravity/bin/
         cp ~/go/bin/0gchaind /opt/zero-gravity/bin/
         0gchaind version --long | tail
 
     - name: Setup 0gd service
       become: yes
       become_user: root
-      shell: |
-        tee /etc/systemd/system/0gd.service > /dev/null << EOF
-        [Unit]
-        Description=zero-gravity node service
-        After=network-online.target
+      ansible.builtin.template:
+        src: systemd/zg.j2
+        dest: /etc/systemd/system/0gd.service
 
-        [Service]
-        User={{user}}
-        ExecStart=/opt/zero-gravity/bin/0gchaind start --home=/home/{{ user }}/.0gchain
-        Restart=on-failure
-        RestartSec=10
-        LimitNOFILE=65535
-
-        [Install]
-        WantedBy=multi-user.target
-        EOF
-
-        systemctl daemon-reload
-        systemctl enable 0gd
+    - name: Reload systemd daemon
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        daemon_reload: true
 
     - name: Configure zero gravity node
       become: yes
@@ -96,6 +105,7 @@
         0gchaind config keyring-backend os
 
         wget https://github.com/0glabs/0g-chain/releases/download/v0.1.0/genesis.json -O ~/.0gchain/config/genesis.json
+        # Get dymanic addrbook
         wget -O ~/.0gchain/config/addrbook.json https://raw.githubusercontent.com/masim05/play-web3/main/assets/addrbook.json
 
         SEEDS="cd529839591e13f5ed69e9a029c5d7d96de170fe@46.4.55.46:34656,3ab056f065ee9d37c4ad2f393033d292651182ab@159.69.72.247:17656,097603a2a1f4e08bd57c4a13ea725081f991ba5e@62.171.153.225:16656,ae1c39dcf8d8a7c956a0333ca3d9176d1df87f64@62.169.23.106:26656,a4055b828e59832c7a06d61fc51347755a160d0b@157.90.33.62:21656"
@@ -117,15 +127,22 @@
         -e "s%:26656%:${PORT_PREFIX}656%g" \
         -e "s%:26660%:${PORT_PREFIX}660%g" ~/.0gchain/config/config.toml
 
-    - name: Get 0gd service status
+    - name: Start 0gd service
       become: yes
       become_user: root
-      shell: |
-        systemctl restart 0gd
-        sleep 10
-        systemctl stop 0gd
-        systemctl status 0gd
-        echo RC: $?
+      ansible.builtin.systemd_service:
+        state: started
+        name: 0gd
+
+    - name: Wait 60 seconds
+      ansible.builtin.pause: seconds=60
+
+    - name: Stop 0gd service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        state: stopped
+        name: 0gd
 
     - name: Sync zero gravity node
       become: yes
@@ -136,14 +153,32 @@
         cp ~/.0gchain/data/priv_validator_state.json  ~/.0gchain/priv_validator_state.json
         rm -rf ~/.0gchain/data
         rm -rf ~/.0gchain/wasm
-        curl -o - -L https://og.snapshot.stavr.tech/og-snap.tar.lz4 | lz4 -c -d - | tar -x -C ~/.0gchain --strip-components 2 > /dev/null 2>&1
+        curl -o - -L https://config-t.noders.services/og/data.tar.lz4 | lz4 -d | tar -x -C ~/.0gchain
+        #curl -o - -L https://og.snapshot.stavr.tech/og-snap.tar.lz4 | lz4 -c -d - | tar -x -C ~/.0gchain --strip-components 2 > /dev/null 2>&1
+        #curl -o - -L http://band.files.stavr.tech:1103/files-band.tar.lz4 | lz4 -c -d - | tar -x -C $HOME/.0gchain --strip-components 2
         cp ~/.0gchain/priv_validator_state.json  ~/.0gchain/data/priv_validator_state.json
         echo RC: $?
 
     - name: Start 0gd service
       become: yes
       become_user: root
+      ansible.builtin.systemd_service:
+        state: started
+        name: 0gd
+
+    - name: Enable 0gd service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        name: 0gd
+        enabled: true
+
+    - name: Wait 60 seconds
+      ansible.builtin.pause: seconds=60
+
+    - name: Get 0gd service status
+      become: yes
+      become_user: root
       shell: |
-        systemctl restart 0gd
         systemctl status 0gd
         echo RC: $?
