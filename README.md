@@ -14,6 +14,7 @@ sudo adduser ansible
 sudo usermod -aG sudo ansible
 sudo su - ansible
 mkdir -p ~/.ssh
+touch ~/.ssh/authorized_keys
 # Put your ssh public key into `~/.ssh/authorized_keys`
 chmod 400 ~/.ssh/authorized_keys
 ```
