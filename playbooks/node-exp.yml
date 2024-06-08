@@ -41,7 +41,7 @@
 
     - name: Add Nginx config
       ansible.builtin.template:
-        src: nginx/node_exp.conf.j2
+        src: nginx/node-exp.conf.j2
         dest: /etc/nginx/sites-available/{{ domain }}.conf
 
     - name: Enable Nginx config
