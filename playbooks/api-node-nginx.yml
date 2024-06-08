@@ -1,0 +1,48 @@
+---
+- hosts: all
+  remote_user: ansible
+  become: true
+  become_user: root
+  tasks:
+  - name: Ensure options-ssl-nginx.conf exists
+    ansible.builtin.template:
+      src: letsencrypt/options-ssl-nginx.conf
+      dest: /etc/letsencrypt/options-ssl-nginx.conf
+
+  - name: Ensure options-ssl-nginx.conf exists
+    ansible.builtin.template:
+      src: letsencrypt/options-ssl-nginx.conf
+      dest: /etc/letsencrypt/options-ssl-nginx.conf
+
+  - name: Ensure Nginx endpoints config exists
+    ansible.builtin.file:
+      path: /etc/nginx/sites-available/{{ domain }}.conf
+      state: touch
+
+  - name: Backup Nginx endpoints config
+    ansible.builtin.copy:
+      remote_src: true
+      src: /etc/nginx/sites-available/{{ domain }}.conf
+      dest: /etc/nginx/sites-available/{{ domain }}.conf.bkp
+
+  - name: Add Nginx endpoints config
+    ansible.builtin.template:
+      src: nginx/api-node.conf.j2
+      dest: /etc/nginx/sites-available/{{ domain }}.conf
+
+  - name: Enable Nginx endpoints config
+    ansible.builtin.file:
+      src: /etc/nginx/sites-available/{{ domain }}.conf
+      dest: /etc/nginx/sites-enabled/{{ domain }}.conf
+      state: link
+
+  - name: Reload Nginx
+    ansible.builtin.systemd:
+      name: nginx
+      state: reloaded
+
+  - name: "UFW: allow 443 tcp"
+    community.general.ufw: rule=allow port=443 proto=tcp
+
+  - name: "UFW: allow {{ grpc_public_port }} tcp"
+    community.general.ufw: rule=allow port={{ grpc_public_port }} proto=tcp
