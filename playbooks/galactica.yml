@@ -92,7 +92,7 @@
         galacticad config keyring-backend os
 
         wget https://config-t.noders.services/galactica/genesis.json -O ~/.galactica/config/genesis.json
-        wget https://config-t.noders.services/galactica/addrbook.json -O ~/.galactica/config/addrbook.json
+        wget -O ~/.galactica/config/addrbook.json https://testnet-files.itrocket.net/galactica/addrbook.json
 
         sed -i.bak -e "s/^persistent_peers *=.*/persistent_peers = \"707af7d29be8d3fff3c4f0cdc0b8986a6a8aff63@galactica-t-rpc.noders.services:28656\"/" ~/.galactica/config/config.toml
 
