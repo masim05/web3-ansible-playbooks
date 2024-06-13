@@ -19,6 +19,18 @@ touch ~/.ssh/authorized_keys
 chmod 400 ~/.ssh/authorized_keys
 ```
 
+Set the following parameterts in the `/etc/ssh/sshd_config` to disable password login:
+```bash
+ChallengeResponseAuthentication no
+PasswordAuthentication no
+UsePAM no
+PermitRootLogin no
+```
+Then reload the sshd:
+```bash
+sudo systemctl reload ssh
+```
+
 ### Run
 
 Install dependencies:
