@@ -71,7 +71,7 @@ Ensure Nginx installed:
 ```bash
 ansible-playbook -i inventory.yml --ask-become-pass -l api-nodes -v playbooks/ensure-nginx.yml
 ```
-Issue certificates:
+Issue certificates (all domains in question should point to the managed server):
 ```bash
 ansible-playbook -i inventory.yml --ask-become-pass -l api-nodes -v playbooks/api-node-letsencrypt.yml
 ```
