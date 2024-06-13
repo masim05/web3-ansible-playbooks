@@ -28,6 +28,11 @@
         src: nginx/htpasswd
         dest: /etc/nginx/htpasswd
 
+    - name: Ensure options-ssl-nginx.conf exists
+      ansible.builtin.template:
+        src: letsencrypt/options-ssl-nginx.conf
+        dest: /etc/letsencrypt/options-ssl-nginx.conf
+
     - name: Ensure Nginx config exists
       ansible.builtin.file:
         path: /etc/nginx/sites-available/{{ domain }}.conf

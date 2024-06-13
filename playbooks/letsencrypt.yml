@@ -38,6 +38,11 @@
     - name: "UFW: allow 80 tcp"
       community.general.ufw: rule=allow port=80 proto=tcp
 
+    - name: Stop Nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: stopped
+
     - name: Generate the SSL certificate
       ansible.builtin.command: "{{ certbot_executable_path }} certonly --standalone --preferred-challenges http -d {{ domain }} --non-interactive --agree-tos --email {{ email }}"
 
@@ -47,3 +52,8 @@
         job: "{{ certbot_executable_path }} renew --quiet"
         minute: "12"
         hour: "21"
+
+    - name: Restart Nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: restarted
