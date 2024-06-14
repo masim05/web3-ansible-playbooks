@@ -56,15 +56,21 @@ OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES \
 ansible-playbook -i inventory.yml --ask-become-pass -l monitored playbooks/node-exp.yml
 ```
 
-#### Nodes
+#### Galactica
 To run preset:
 ```bash
-ansible-playbook -i inventory.yml -v --ask-become-pass playbooks/preset.yml
+ansible-playbook -i inventory.yml -v --ask-become-pass -l galactica playbooks/preset.yml
 ```
 
 To install, sync and run galactica node:
 ```bash
 ansible-playbook -i inventory.yml -v --ask-become-pass -l galactica playbooks/galactica.yml
+```
+
+#### Zero Gravity
+To run preset:
+```bash
+ansible-playbook -i inventory.yml -v --ask-become-pass -l zg playbooks/preset.yml
 ```
 To install, sync and run zero gravity node:
 ```bash
