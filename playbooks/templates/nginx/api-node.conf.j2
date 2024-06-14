@@ -1,4 +1,4 @@
-upstream api {
+upstream api-{{ domain }} {
     server {{ api_address }};
 }
 
@@ -13,7 +13,7 @@ server {
     #ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
     location ~ ^/(.*)$ {
-        proxy_pass           http://api/$1;
+        proxy_pass           http://api-{{ domain }}/$1;
     }
 
 }
@@ -28,7 +28,7 @@ server {
     return 404;
 }
 
-upstream rpc {
+upstream rpc-{{ domain }} {
     server {{ prc_address }};
 }
 
@@ -43,12 +43,12 @@ server {
     #ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
     location / {
-        proxy_pass           http://rpc$request_uri;
+        proxy_pass           http://rpc-{{ domain }}$request_uri;
 	    proxy_set_header     Host $host;
     }
 
     location /websocket {
-        proxy_pass http://rpc;
+        proxy_pass http://rpc-{{ domain }};
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -66,7 +66,7 @@ server {
     return 404;
 }
 
-upstream grpc {
+upstream grpc-{{ domain }} {
     server {{ gprc_address }};
 }
 
@@ -77,6 +77,6 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/{{ domain }}/privkey.pem;
 
     location / {
-	    grpc_pass grpc://grpc;
+	    grpc_pass grpc://grpc-{{ domain }};
     }
 }

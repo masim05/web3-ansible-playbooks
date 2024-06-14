@@ -31,7 +31,7 @@ Then reload the sshd:
 sudo systemctl reload ssh
 ```
 
-### Run
+### Run playbooks
 
 Install dependencies:
 ```bash
