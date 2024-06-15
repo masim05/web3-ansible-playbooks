@@ -46,15 +46,21 @@ Prerequisites:
 `may have been in progress in another thread when fork() was called.` error
 ([stackoverflow](https://stackoverflow.com/questions/50168647/multiprocessing-causes-python-to-crash-and-gives-an-error-may-have-been-in-progr))
  - DNS should be setup: `domain` should point to the managed server
+ - Generate `htpasswd` file for basic auth ([guide](https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/)) and put it at `playbooks/templates/nginx/htpasswd`
 
 After that:
 ```bash
-ansible-playbook -i inventory.yml --ask-become-pass -l monitored playbooks/ensure-nginx.yml
-ansible-playbook -i inventory.yml --ask-become-pass -l monitored playbooks/letsencrypt.yml
+ansible-playbook -i inventory.yml --ask-become-pass -l -v monitored playbooks/ensure-nginx.yml
+ansible-playbook -i inventory.yml --ask-become-pass -l -v monitored playbooks/letsencrypt.yml
 brew install gnu-tar
 OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES \
-ansible-playbook -i inventory.yml --ask-become-pass -l monitored playbooks/node-exp.yml
+ansible-playbook -i inventory.yml --ask-become-pass -l -v monitored playbooks/node-exp.yml
 ```
+
+Once successful, metrics show be accessible at `https://<domain>/prometheus-node/metrics` with basic auth.
+There are several guides about prometheus ang grafane setup to monitor and alert on node metrics,
+[this](https://medium.com/@DanialEskandari/system-monitoring-with-prometheus-grafana-and-node-exporter-412027684564)
+is one of them.
 
 #### Galactica
 To run preset:
