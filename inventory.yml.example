@@ -31,7 +31,7 @@ zg:
         git_tag: v0.1.0
         chain_id: zgtendermint_16600-1
 
-api-nodes:
+apiNodes:
     hosts:
         galactica-t-api-node:
             ansible_host: galactica-t-2.example.com
