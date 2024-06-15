@@ -1,3 +1,15 @@
+monitored:
+    hosts:
+        host-to-be-monitored-with-node-exp-01.example.com:
+            domain: host-to-be-monitored-with-node-exp-01.example.com # for TLS certificate, not necessary the same as the domain above
+        host-to-be-monitored-with-node-exp-02.example.com:
+            domain: host-to-be-monitored-with-node-exp-02.example.com
+    vars:
+        node_exporter_version: 1.8.1
+        node_exporter_web_listen_address: 127.0.0.1:9100
+        email: email-for-cert@example.com # for TLS certificate, can be moved to host level if different emails are required
+        worker_processes: 2
+
 galactica:
     hosts:
         galactica-t-1.example.com:
@@ -10,20 +22,37 @@ galactica:
         chain_id: galactica_9302-1
 zg:
     hosts:
-        zg-t-1.example.com:
-        zg-t-2.example.com:
+        0g-t-1.example.com:
+        0g-t-2.example.com:
     vars:
         user: zg
         port_prefix: 21
         go_version: 1.22.3
         git_tag: v0.1.0
         chain_id: zgtendermint_16600-1
-monitored:
+
+api-nodes:
     hosts:
-        host-to-be-monitored-with-node-exp-01.example.com:
+        galactica-t-api-node:
+            ansible_host: galactica-t-2.example.com
+            domain: galactica-t-2.example.com # for TLS certificate
+            api_subdomain: api
+            api_address: "localhost:20317" # All ports should be aligned with ones listened by the node, check port_prefix above
+            rpc_subdomain: rpc
+            prc_address: "localhost:20657"
+            grpc_subdomain: grpc
+            gprc_address: "localhost:20090"
+            grpc_public_port: 20443
+        0g-t-api-node:
+            ansible_host: 0g-t-2.example.com
+            domain: 0g-t-2.example.com
+            api_subdomain: api
+            api_address: "localhost:21317"
+            rpc_subdomain: rpc
+            prc_address: "localhost:21657"
+            grpc_subdomain: grpc
+            gprc_address: "localhost:21090"
+            grpc_public_port: 21443
     vars:
-        node_exporter_version: 1.8.1
-        node_exporter_web_listen_address: 127.0.0.1:9100
-        domain: host-to-be-monitored-with-node-exp-01.example.com
-        email: email-for-cert@example.com
         worker_processes: 2
+        email: email-for-cert@example.com # for TLS certificate, can be moved to host level if different emails are required
