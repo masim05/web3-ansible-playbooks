@@ -108,6 +108,8 @@ ansible-playbook -i inventory.yml --ask-become-pass -l api-nodes -v playbooks/ap
 - [ ] Avoid any action if there is synced node on the same port already
 - [ ] Unbreak certs renewal (standalone domain validation may conflict with Nginx listening 80 port)
 - [ ] Implement playbook to enable API endpoints on the node
+- [ ] Galactica: use ansible.builtin.git in order to pull code
+- [ ] Galactica: use ansible.builtin.template for systemd service config
 
 Feel free to add more playbooks and send PRs, you are welcome!
 
