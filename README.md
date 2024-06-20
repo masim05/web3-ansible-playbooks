@@ -62,6 +62,17 @@ There are several guides about prometheus ang grafane setup to monitor and alert
 [this](https://medium.com/@DanialEskandari/system-monitoring-with-prometheus-grafana-and-node-exporter-412027684564)
 is one of them.
 
+#### Band
+To run preset:
+```bash
+ansible-playbook -i inventory.yml -v --ask-become-pass -l band playbooks/preset.yml
+```
+
+To install, sync and run band node:
+```bash
+ansible-playbook -i inventory.yml -v --ask-become-pass -l band playbooks/band/node.yml
+```
+
 #### Galactica
 To run preset:
 ```bash
@@ -89,19 +100,19 @@ new validator or put existing validator's keys on the node.
 #### Expose public endpoints
 To run preset:
 ```bash
-ansible-playbook -i inventory.yml --ask-become-pass -l api-nodes -v playbooks/preset.yml
+ansible-playbook -i inventory.yml --ask-become-pass -l apiNodes -v playbooks/preset.yml
 ```
 Ensure Nginx installed:
 ```bash
-ansible-playbook -i inventory.yml --ask-become-pass -l api-nodes -v playbooks/ensure-nginx.yml
+ansible-playbook -i inventory.yml --ask-become-pass -l apiNodes -v playbooks/ensure-nginx.yml
 ```
 Issue certificates (all domains in question should point to the managed server):
 ```bash
-ansible-playbook -i inventory.yml --ask-become-pass -l api-nodes -v playbooks/api-node-letsencrypt.yml
+ansible-playbook -i inventory.yml --ask-become-pass -l apiNodes -v playbooks/api-node-letsencrypt.yml
 ```
 Setup Nginx config:
 ```bash
-ansible-playbook -i inventory.yml --ask-become-pass -l api-nodes -v playbooks/api-node-nginx.yml
+ansible-playbook -i inventory.yml --ask-become-pass -l apiNodes -v playbooks/api-node-nginx.yml
 ```
 
 ### TODO:
