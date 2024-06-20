@@ -1,0 +1,13 @@
+[Unit]
+Description=Yoda Daemon
+After=network-online.target
+
+[Service]
+User={{ user }}
+ExecStart=/home/{{ user }}/go/bin/yoda run
+Restart=always
+RestartSec=3
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target
