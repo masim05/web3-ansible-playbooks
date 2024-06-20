@@ -1,0 +1,18 @@
+[Unit]
+Description=BandChain Node Daemon
+After=network-online.target
+
+[Service]
+Environment="DAEMON_NAME=bandd"
+Environment="DAEMON_HOME=/home/{{ user }}/.band"
+Environment="DAEMON_RESTART_AFTER_UPGRADE=true"
+Environment="DAEMON_ALLOW_DOWNLOAD_BINARIES=false"
+Environment="UNSAFE_SKIP_BACKUP=true"
+User={{ user }}
+ExecStart=/home/{{ user }}/go/bin/cosmovisor run start
+Restart=always
+RestartSec=3
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

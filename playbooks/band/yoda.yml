@@ -1,0 +1,53 @@
+---
+- name: Setup Yoda
+  hosts: band
+  remote_user: ansible
+  tasks:
+
+    - name: Show params
+      debug:
+        msg: user {{ user }}, port_prefix {{ port_prefix }}, go_version {{ go_version }}
+
+    - name: Setup Yoda
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        export GOPATH=~/go
+        export PATH=$PATH:$GOPATH/bin
+        rm -rf ~/.yoda
+        yoda config chain-id {{ chain_id }}
+        yoda config node http://localhost:{{ port_prefix }}657
+        yoda config broadcast-timeout "5m"
+        yoda config rpc-poll-interval "1s"
+        yoda config max-try 5
+        yoda keys add rep_1
+        yoda keys add rep_2
+        yoda config executor "rest:{{ executor_url }}?timeout=10s"
+        yoda config validator {{ validator }}
+
+    - name: Setup yoda service
+      become: yes
+      become_user: root
+      ansible.builtin.template:
+        src: systemd/yoda.j2
+        dest: /etc/systemd/system/yoda.service
+
+    - name: Reload systemd daemon
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+
+    - name: Start yoda service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        state: started
+        name: yoda
+
+    - name: Enable yoda service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        enabled: true
+        name: yoda

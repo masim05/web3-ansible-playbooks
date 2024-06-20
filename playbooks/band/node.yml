@@ -1,0 +1,150 @@
+---
+- name: Install band node
+  hosts: band
+  remote_user: ansible
+  tasks:
+
+    - name: Show params
+      debug:
+        msg: user {{ user }}, port_prefix {{ port_prefix }}, go_version {{ go_version }}
+
+    - name: Create system user
+      become: yes
+      become_user: root
+      ansible.builtin.user: name="{{ user }}" shell=/usr/bin/bash
+
+    - name: Install jq lz4 build-essential curl wget git
+      become: yes
+      become_user: root
+      ansible.builtin.apt:
+        update_cache: yes
+        pkg:
+          - jq
+          - lz4
+          - build-essential
+          - curl
+          - wget
+          - git
+
+    - name: Install go
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        cd
+        VERSION={{ go_version }}
+        mkdir -p ~/usr/local
+        wget "https://go.dev/dl/go$VERSION.linux-amd64.tar.gz" -O go.tar.gz > /dev/null 2>&1
+        ls go.tar.gz && ls ~/usr/local/go && rm -rf ~/usr/local/go
+        tar -xzf go.tar.gz -C ~/usr/local
+        rm go.tar.gz
+        ~/usr/local/go/bin/go version
+
+    - name: Clone BandChain repo
+      become: yes
+      become_user: "{{ user }}"
+      ansible.builtin.git:
+        repo: 'https://github.com/bandprotocol/chain'
+        dest: /home/{{ user }}/chain
+        version: "{{ git_tag }}"
+
+    - name: Build BandChain
+      become: yes
+      become_user: "{{ user }}"
+      async: 1800
+      poll: 60
+      vars:
+        ansible_command_timeout: 60
+      shell: |
+        export PATH=$PATH:~/usr/local/go/bin
+        export GOPATH=~/go
+        cd /home/{{ user }}/chain
+        make install
+
+    - name: Init BandChain
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        export GOPATH=~/go
+        export PATH=$PATH:$GOPATH/bin
+        bandd init --chain-id {{ chain_id }} {{ moniker }}
+        wget {{ genesis_file_url }} -O $HOME/.band/config/genesis.json
+        wget -qO- {{ bin_files_url }} | tar xvz -C $HOME/.band/ > /dev/null
+
+    - name: Configure general settings
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        export SEEDS="fcbc3a065e05a240f0425c4b89aaeccdf9301f4a@185.103.132.7:26656,79740837251bfb6523bccc944c2e9be111c07e62@65.109.92.241:11026,bfde1148f36ed5e9f803ab5cd473d95d762a1dbd@37.27.63.34:26656,4cc01e8420a0437f843ea39c459aed171e765c61@95.216.46.125:44656,618e7d04de1d08c1231322ac9fa7d459c9e9a25c@65.109.24.82:44656"
+        export PERSISTENT_PEERS="4cc01e8420a0437f843ea39c459aed171e765c61@95.216.46.125:44656,618e7d04de1d08c1231322ac9fa7d459c9e9a25c@65.109.24.82:44656,d1994d6f850252c801e89f2f574e9bcdf5b06ac6@95.217.110.43:27656,4dcdc885ca61d758f5343a0afd1058e41cb36e73@37.27.112.99:26610,06091faa832099014c45348abd56c531944698c8@65.108.226.166:27656,f6c5ff15414bdaaeff59f555eae5ca745c03b37e@77.68.30.186:27656"
+        sed -E -i "s/seeds = \".*\"/seeds = \"${SEEDS}\"/"  ~/.band/config/config.toml
+        sed -E -i "s/persistent_peers = \".*\"/persistent_peers = \"${PERSISTENT_PEERS}\"/"  ~/.band/config/config.toml
+        sed -E -i "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.0025uband\"/"  ~/.band/config/app.toml
+
+        export PORT_PREFIX={{ port_prefix }}
+
+        sed -i.bak -e "s%:1317%:${PORT_PREFIX}317%g" \
+        -e "s%:8080%:${PORT_PREFIX}080%g" \
+        -e "s%:9090%:${PORT_PREFIX}090%g" \
+        -e "s%:9091%:${PORT_PREFIX}091%g" \
+        -e "s%:8545%:${PORT_PREFIX}545%g" \
+        -e "s%:8546%:${PORT_PREFIX}546%g" \
+        -e "s%:6065%:${PORT_PREFIX}065%g" ~/.band/config/app.toml
+
+        sed -i.bak -e "s%:26658%:${PORT_PREFIX}658%g" \
+        -e "s%:26657%:${PORT_PREFIX}657%g" \
+        -e "s%:6060%:${PORT_PREFIX}060%g" \
+        -e "s%:26656%:${PORT_PREFIX}656%g" \
+        -e "s%:26660%:${PORT_PREFIX}660%g" ~/.band/config/config.toml
+
+    - name: Setup Cosmovisor
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        export PATH=$PATH:~/usr/local/go/bin
+        export DAEMON_NAME=bandd
+        export DAEMON_HOME=~/.band
+        go install github.com/cosmos/cosmos-sdk/cosmovisor/cmd/cosmovisor@v1.3.0
+        mkdir -p ~/.band/cosmovisor/genesis/bin
+        mkdir -p ~/.band/cosmovisor/upgrades
+        cp ~/go/bin/bandd ~/.band/cosmovisor/genesis/bin
+        mkdir -p ~/.band/cosmovisor/upgrades/v2_5/bin
+        cp ~/go/bin/bandd $DAEMON_HOME/cosmovisor/upgrades/v2_5/bin
+
+    - name: Sync with network
+      become: yes
+      become_user: "{{ user }}"
+      async: 3600
+      poll: 60
+      vars:
+        ansible_command_timeout: 60
+      shell: |
+        cd ~/.band/
+        wget https://tools.highstakes.ch/files/bandprotocol.tar.gz
+        tar -xvf bandprotocol.tar.gz > /dev/null
+
+    - name: Setup bandd service
+      become: yes
+      become_user: root
+      ansible.builtin.template:
+        src: systemd/bandd.j2
+        dest: /etc/systemd/system/bandd.service
+
+    - name: Reload systemd daemon
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+
+    - name: Start bandd service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        state: started
+        name: bandd
+
+    - name: Enable bandd service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        enabled: true
+        name: bandd
