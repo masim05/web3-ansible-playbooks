@@ -4,7 +4,7 @@ After=network-online.target
 
 [Service]
 User={{user}}
-ExecStart=/opt/zero-gravity/bin/0gchaind start --home=/home/{{ user }}/.0gchain
+ExecStart=/home/{{ user }}/go/bin/0gchaind  start --home=/home/{{ user }}/.0gchain
 Restart=on-failure
 RestartSec=10
 LimitNOFILE=65535
