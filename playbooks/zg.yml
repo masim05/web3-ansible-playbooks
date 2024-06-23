@@ -104,7 +104,7 @@
         0gchaind config chain-id {{ chain_id }}
         0gchaind config keyring-backend os
 
-        wget https://github.com/0glabs/0g-chain/releases/download/v0.1.0/genesis.json -O ~/.0gchain/config/genesis.json
+        wget {{ genesis_url }} -O ~/.0gchain/config/genesis.json
         # Get dymanic addrbook
         wget -O ~/.0gchain/config/addrbook.json https://raw.githubusercontent.com/masim05/play-web3/main/assets/addrbook.json
 

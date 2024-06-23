@@ -29,6 +29,7 @@ zg:
         port_prefix: 21
         go_version: 1.22.3
         git_tag: v0.1.0
+        genesis_url: https://github.com/0glabs/0g-chain/releases/download/v0.1.0/genesis.json
         chain_id: zgtendermint_16600-1
 
 apiNodes:
