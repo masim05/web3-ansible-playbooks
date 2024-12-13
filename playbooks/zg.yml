@@ -25,6 +25,8 @@
           - curl
           - acl
           - git
+          - make
+          - gcc
 
     - name: Create /opt folder
       become: yes
