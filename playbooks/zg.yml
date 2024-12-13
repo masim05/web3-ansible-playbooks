@@ -13,7 +13,7 @@
       become_user: root
       ansible.builtin.user: name="{{ user }}" shell=/usr/bin/bash
 
-    - name: Install jq lz4 build-essential curl acl git
+    - name: Install jq lz4 build-essential curl acl git make gcc
       become: yes
       become_user: root
       ansible.builtin.apt:
