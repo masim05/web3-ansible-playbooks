@@ -28,14 +28,6 @@
           - make
           - gcc
 
-    - name: Create /opt folder
-      become: yes
-      become_user: root
-      ansible.builtin.file:
-        path: /opt
-        state: directory
-        mode: '777'
-
     - name: Create /home/{{ user }}/usr/local folder
       become: yes
       become_user: "{{ user }}"
