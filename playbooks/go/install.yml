@@ -1,0 +1,24 @@
+---
+- name: Install go for a user
+  hosts: all
+  remote_user: ansible
+  become: yes
+  become_user: root
+  tasks:
+
+    - name: Show params
+      debug:
+        msg: user {{ user }}, go_version {{ go_version }}
+
+    - name: Install go
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        cd
+        VERSION={{ go_version }}
+        mkdir -p ~/usr/local
+        wget "https://go.dev/dl/go$VERSION.linux-amd64.tar.gz" -O go.tar.gz > /dev/null 2>&1
+        ls go.tar.gz && ls ~/usr/local/go && rm -rf ~/usr/local/go
+        tar -xzf go.tar.gz -C ~/usr/local
+        rm go.tar.gz
+        ~/usr/local/go/bin/go version
