@@ -53,11 +53,11 @@ Prerequisites:
 
 After that:
 ```bash
-ansible-playbook -i inventory.yml --ask-become-pass -l -v monitored playbooks/ensure-nginx.yml
-ansible-playbook -i inventory.yml --ask-become-pass -l -v monitored playbooks/letsencrypt.yml
+ansible-playbook -i inventory.yml --ask-become-pass -l monitored -v playbooks/ensure-nginx.yml
+ansible-playbook -i inventory.yml --ask-become-pass -l monitored -v playbooks/letsencrypt.yml
 brew install gnu-tar
 OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES \
-ansible-playbook -i inventory.yml --ask-become-pass -l -v monitored playbooks/node-exp.yml
+ansible-playbook -i inventory.yml --ask-become-pass -l monitored -v playbooks/node-exp.yml
 ```
 
 Once successful, metrics show be accessible at `https://<domain>/prometheus-node/metrics` with basic auth.
