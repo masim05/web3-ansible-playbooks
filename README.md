@@ -76,6 +76,17 @@ To install, sync and run band node:
 ansible-playbook -i inventory.yml -v --ask-become-pass -l band playbooks/band/node.yml
 ```
 
+#### Arkeo testnet
+To run preset:
+```bash
+ansible-playbook -i inventory.yml -v --ask-become-pass -l arkeo-testnet playbooks/preset.yml
+```
+
+To install, sync and run band node:
+```bash
+ansible-playbook -i inventory.yml -v --ask-become-pass -l arkeo-testnet playbooks/arkeo-testnet/node.yml
+```
+
 #### Galactica
 To run preset:
 ```bash
