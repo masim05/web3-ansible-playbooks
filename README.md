@@ -1,5 +1,7 @@
-# Deprecation notice
-This repo has been deprecated in favour of [polkachu repo](https://github.com/polkachu/cosmos-validators).
+# Undeprecation notice
+~~This repo has been deprecated in favour of [polkachu repo](https://github.com/polkachu/cosmos-validators).~~
+
+Still alive.
 
 ### Why ansible?
 Ansible automates the management of remote systems and controls their desired
