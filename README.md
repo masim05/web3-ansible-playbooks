@@ -20,6 +20,10 @@ mkdir -p ~/.ssh
 touch ~/.ssh/authorized_keys
 # Put your ssh public key into `~/.ssh/authorized_keys`
 chmod 400 ~/.ssh/authorized_keys
+
+# Create ansible working directory
+sudo mkdir /var/ansible
+sudo chown ansible:ansible /var/ansible
 ```
 
 Set the following parameterts in the `/etc/ssh/sshd_config` to disable password login:
@@ -74,6 +78,17 @@ ansible-playbook -i inventory.yml -v --ask-become-pass -l band playbooks/preset.
 To install, sync and run band node:
 ```bash
 ansible-playbook -i inventory.yml -v --ask-become-pass -l band playbooks/band/node.yml
+```
+
+#### Arkeo mainnet
+To run preset:
+```bash
+ansible-playbook -i inventory.yml -v --ask-become-pass -l arkeo-mainnet playbooks/preset.yml
+```
+
+To install, sync and run band node:
+```bash
+ansible-playbook -i inventory.yml -v --ask-become-pass -l arkeo-mainnet playbooks/arkeo/node.yml
 ```
 
 #### Arkeo testnet

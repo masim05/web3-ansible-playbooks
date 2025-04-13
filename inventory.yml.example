@@ -32,6 +32,20 @@ zg:
         genesis_url: https://github.com/0glabs/0g-chain/releases/download/v0.2.3/genesis.json
         chain_id: zgtendermint_16600-2
 
+arkeo-mainnet:
+    hosts:
+        arkeo-t.example.com:
+    vars:
+        user: arkeo
+        port_prefix: 21
+        go_version: 1.24.2
+        git_tag: v1.0.9
+        genesis_file_url: https://mainnet-files.bonynode.online/arkeo/genesis.json
+        addrbook_url: https://mainnet-files.bonynode.online/arkeo/addrbook.json
+        chain_id: arkeo-main-v1
+        moniker: MONIKER
+        snap_rpc: https://arkeo-mainnet-rpc.bonynode.online
+
 arkeo-testnet:
     hosts:
         arkeo-t.example.com:

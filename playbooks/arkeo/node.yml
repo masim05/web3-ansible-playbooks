@@ -1,0 +1,158 @@
+---
+- name: Install Arkeo mainnet node
+  hosts: arkeo-mainnet
+  remote_user: ansible
+  tasks:
+
+    - name: Show params
+      debug:
+        msg: user {{ user }}, port_prefix {{ port_prefix }}, go_version {{ go_version }}
+
+    - name: Create system user
+      become: yes
+      become_user: root
+      ansible.builtin.user: name="{{ user }}" shell=/usr/bin/bash
+
+    - name: Install jq lz4 build-essential curl wget git
+      become: yes
+      become_user: root
+      ansible.builtin.apt:
+        update_cache: yes
+        pkg:
+          - jq
+          - lz4
+          - build-essential
+          - curl
+          - wget
+          - git
+
+    - name: Install go
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        cd
+        VERSION={{ go_version }}
+        mkdir -p ~/usr/local
+        wget "https://go.dev/dl/go$VERSION.linux-amd64.tar.gz" -O go.tar.gz > /dev/null 2>&1
+        ls go.tar.gz && ls ~/usr/local/go && rm -rf ~/usr/local/go
+        tar -xzf go.tar.gz -C ~/usr/local
+        rm go.tar.gz
+        ~/usr/local/go/bin/go version
+
+    - name: Clone Arkeo repo
+      become: yes
+      become_user: "{{ user }}"
+      ansible.builtin.git:
+        repo: 'https://github.com/arkeonetwork/arkeo.git'
+        dest: /home/{{ user }}/arkeo
+        version: "{{ git_tag }}"
+
+    - name: Build Arkeo mainnet
+      become: yes
+      become_user: "{{ user }}"
+      async: 1800
+      poll: 60
+      vars:
+        ansible_command_timeout: 60
+      shell: |
+        export PATH=$PATH:~/usr/local/go/bin
+        export GOPATH=~/go
+        cd /home/{{ user }}/arkeo
+        make install
+
+    - name: Init Arkeo node
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        export GOPATH=~/go
+        export PATH=$PATH:$GOPATH/bin
+        arkeod init --chain-id {{ chain_id }} {{ moniker }}
+        wget {{ genesis_file_url }} -O ~/.arkeo/config/genesis.json
+        wget {{ addrbook_url }}     -O ~/.arkeo/config/addrbook.json
+
+    - name: Configure general settings
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        sed -E -i "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.001uarkeo\"/"  ~/.arkeo/config/app.toml
+        export PORT_PREFIX={{ port_prefix }}
+        sed -i.bak -e "s%:1317%:${PORT_PREFIX}317%g" \
+        -e "s%:8080%:${PORT_PREFIX}080%g" \
+        -e "s%:9090%:${PORT_PREFIX}090%g" \
+        -e "s%:9091%:${PORT_PREFIX}091%g" \
+        -e "s%:8545%:${PORT_PREFIX}545%g" \
+        -e "s%:8546%:${PORT_PREFIX}546%g" \
+        -e "s%:6065%:${PORT_PREFIX}065%g" ~/.arkeo/config/app.toml
+
+        sed -i.bak -e "s%:26658%:${PORT_PREFIX}658%g" \
+        -e "s%:26657%:${PORT_PREFIX}657%g" \
+        -e "s%:6060%:${PORT_PREFIX}060%g" \
+        -e "s%:26656%:${PORT_PREFIX}656%g" \
+        -e "s%:26660%:${PORT_PREFIX}660%g" ~/.arkeo/config/config.toml
+
+    - name: Setup Cosmovisor
+      become: yes
+      become_user: "{{ user }}"
+      shell: |
+        export PATH=$PATH:~/usr/local/go/bin
+        export DAEMON_NAME=arkeod
+        export DAEMON_HOME=~/.arkeo
+        go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@v1.5.0
+        mkdir -p ~/.arkeo/cosmovisor/genesis/bin
+        mkdir -p ~/.arkeo/cosmovisor/upgrades
+        cp ~/go/bin/arkeod ~/.arkeo/cosmovisor/genesis/bin
+
+    - name: Sync with network
+      become: yes
+      become_user: "{{ user }}"
+      async: 3600
+      poll: 60
+      vars:
+        ansible_command_timeout: 60
+      shell: |
+        export PATH=$PATH:~/go/bin
+
+        cp ~/.arkeo/data/priv_validator_state.json ~/.arkeo/priv_validator_state.json.backup
+        arkeod tendermint unsafe-reset-all --home ~/.arkeo
+        mv ~/.arkeo/priv_validator_state.json.backup ~/.arkeo/data/priv_validator_state.json
+
+        SNAP_RPC={{ snap_rpc }}
+
+        LATEST_HEIGHT=$(curl -s $SNAP_RPC/block | jq -r .result.block.header.height);
+        BLOCK_HEIGHT=$((LATEST_HEIGHT - 1000));
+        TRUST_HASH=$(curl -s "$SNAP_RPC/block?height=$BLOCK_HEIGHT" | jq -r .result.block_id.hash) 
+        
+        echo $LATEST_HEIGHT $BLOCK_HEIGHT $TRUST_HASH && sleep 2
+        
+        sed -i.bak -E "s|^(enable[[:space:]]+=[[:space:]]+).*$|\1true| ;
+        s|^(rpc_servers[[:space:]]+=[[:space:]]+).*$|\1\"$SNAP_RPC,$SNAP_RPC\"| ;
+        s|^(trust_height[[:space:]]+=[[:space:]]+).*$|\1$BLOCK_HEIGHT| ;
+        s|^(trust_hash[[:space:]]+=[[:space:]]+).*$|\1\"$TRUST_HASH\"| ;
+        s|^(seeds[[:space:]]+=[[:space:]]+).*$|\1\"\"|" $HOME/.arkeo/config/config.toml
+
+    - name: Setup arkeod service
+      become: yes
+      become_user: root
+      ansible.builtin.template:
+        src: systemd/cosmovisor-arkeod.j2
+        dest: /etc/systemd/system/cosmovisor-arkeod.service
+
+    - name: Reload systemd daemon
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+
+    - name: Start arkeod service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        state: started
+        name: cosmovisor-arkeod
+
+    - name: Enable arkeod service
+      become: yes
+      become_user: root
+      ansible.builtin.systemd_service:
+        enabled: true
+        name: cosmovisor-arkeod
