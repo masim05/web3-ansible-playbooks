@@ -59,6 +59,21 @@ arkeo-testnet:
         moniker: MONIKER
         snap_rpc: https://arkeo-testnet-rpc.bonynode.online
 
+axone:
+    hosts:
+        axone-t.example.com:
+    vars:
+        user: axone
+        port_prefix: 27
+        go_version: 1.24.2
+        git_tag: v10.0.0
+        genesis_file_url: https://raw.githubusercontent.com/axone-protocol/networks/911b2d34631ac242e9ef3be577163653ed644726/chains/dentrite-1/genesis.json
+        chain_id: axone-dentrite-1
+        moniker: MONIKER
+        sync_rpc: https://axone-t-rpc.noders.services:443
+        seeds: ade4d8bc8cbe014af6ebdf3cb7b1e9ad36f412c0@testnet-seeds.polkachu.com:17656
+        systemd_service: cosmovisor-axoned-t.service
+
 apiNodes:
     hosts:
         galactica-t-api-node:

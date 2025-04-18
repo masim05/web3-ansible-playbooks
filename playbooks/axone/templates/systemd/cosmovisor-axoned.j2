@@ -1,0 +1,19 @@
+[Unit]
+Description=Axone Node Daemon
+After=network-online.target
+
+[Service]
+WorkingDirectory=/home/{{ user }}/.axoned
+User={{ user }}
+ExecStart=/home/{{ user }}/go/bin/cosmovisor run start
+Restart=always
+RestartSec=4
+LimitNOFILE=4096
+Environment="DAEMON_NAME=axoned"
+Environment="DAEMON_HOME=/home/{{ user }}/.axoned"
+Environment="DAEMON_ALLOW_DOWNLOAD_BINARIES=false"
+Environment="DAEMON_RESTART_AFTER_UPGRADE=true"
+Environment="UNSAFE_SKIP_BACKUP=true"
+
+[Install]
+WantedBy=multi-user.target
