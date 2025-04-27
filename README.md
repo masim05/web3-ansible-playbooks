@@ -1,3 +1,5 @@
+<!-- markdownlint-configure-file { "MD001": false } -->
+
 # Undeprecation notice
 
 ~~This repo has been deprecated in favour of [polkachu repo](https://github.com/polkachu/cosmos-validators).~~
@@ -33,7 +35,7 @@ sudo mkdir /var/ansible
 sudo chown ansible:ansible /var/ansible
 ```
 
-Set the following parameterts in the `/etc/ssh/sshd_config` to disable password login:
+Set the following parameters in the `/etc/ssh/sshd_config` to disable password login:
 
 ```bash
 ChallengeResponseAuthentication no
@@ -59,13 +61,14 @@ ansible-galaxy install -r requirements.yml
 #### Node exporter (mac)
 
 Prerequisites:
- - install `gnu-tar` dependency
+
+- install `gnu-tar` dependency
 ([doc](https://galaxy.ansible.com/ui/repo/published/prometheus/prometheus/content/role/node_exporter/))
- - disable fork safety in order to prevent
+- disable fork safety in order to prevent
 `may have been in progress in another thread when fork() was called.` error
 ([stackoverflow](https://stackoverflow.com/questions/50168647/multiprocessing-causes-python-to-crash-and-gives-an-error-may-have-been-in-progr))
- - DNS should be setup: `domain` should point to the managed server
- - Generate `htpasswd` file for basic auth ([guide](https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/)) and put it at `playbooks/templates/nginx/htpasswd`
+- DNS should be setup: `domain` should point to the managed server
+- Generate `htpasswd` file for basic auth ([guide](https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/)) and put it at `playbooks/templates/nginx/htpasswd`
 
 After that:
 
