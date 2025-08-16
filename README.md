@@ -107,8 +107,7 @@ To run preset:
 ansible-playbook -i inventory.yml -v --ask-become-pass -l arkeo-mainnet playbooks/preset.yml
 ```
 
-To install, sync and run band node:
-
+To install, sync and run arkeo node:
 ```bash
 ansible-playbook -i inventory.yml -v --ask-become-pass -l arkeo-mainnet playbooks/arkeo/node.yml
 ```
@@ -121,8 +120,7 @@ To run preset:
 ansible-playbook -i inventory.yml -v --ask-become-pass -l arkeo-testnet playbooks/preset.yml
 ```
 
-To install, sync and run band node:
-
+To install, sync and run arkeo testnet node:
 ```bash
 ansible-playbook -i inventory.yml -v --ask-become-pass -l arkeo-testnet playbooks/arkeo-testnet/node.yml
 ```
