@@ -55,7 +55,7 @@
       vars:
         ansible_command_timeout: 60
       shell: |
-        export PATH=$PATH:~/usr/local/go/bin
+        export PATH=~/usr/local/go/bin:$PATH
         export GOPATH=~/go
         cd /home/{{ user }}/arkeo
         make install
@@ -65,7 +65,7 @@
       become_user: "{{ user }}"
       shell: |
         export GOPATH=~/go
-        export PATH=$PATH:$GOPATH/bin
+        export PATH=$GOPATH/bin:$PATH
         arkeod init --chain-id {{ chain_id }} {{ moniker }}
         wget {{ genesis_file_url }} -O ~/.arkeo/config/genesis.json
         wget {{ addrbook_url }}     -O ~/.arkeo/config/addrbook.json
@@ -94,7 +94,7 @@
       become: yes
       become_user: "{{ user }}"
       shell: |
-        export PATH=$PATH:~/usr/local/go/bin
+        export PATH=~/usr/local/go/bin:$PATH
         export DAEMON_NAME=arkeod
         export DAEMON_HOME=~/.arkeo
         go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@v1.5.0
