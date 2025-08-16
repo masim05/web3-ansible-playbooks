@@ -38,8 +38,8 @@ arkeo-mainnet:
     vars:
         user: arkeo
         port_prefix: 21
-        go_version: 1.24.2
-        git_tag: v1.0.9
+        go_version: 1.25.0
+        git_tag: v1.0.14
         genesis_file_url: https://mainnet-files.bonynode.online/arkeo/genesis.json
         addrbook_url: https://mainnet-files.bonynode.online/arkeo/addrbook.json
         chain_id: arkeo-main-v1
